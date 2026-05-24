@@ -7,6 +7,8 @@ import * as googleTTS from 'google-tts-api';
 import axios from 'axios';
 import ffmpeg from 'ffmpeg-static';
 import Tesseract from 'tesseract.js';
+import { parseAndValidateRequest } from '@/lib/validations/validate';
+import { generateVideoSchema } from '@/lib/validations/video';
 import { currentUser } from '@clerk/nextjs/server';
 import { redisClient } from '@/lib/ratelimit';
 
@@ -17,6 +19,9 @@ const groq = new Groq({
 export async function POST(req: Request) {
     let lockKey = null;
     try {
+        const { errorResponse, data } = await parseAndValidateRequest(req, generateVideoSchema);
+        if (errorResponse) return errorResponse;
+
         const user = await currentUser();
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

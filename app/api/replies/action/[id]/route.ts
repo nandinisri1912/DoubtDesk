@@ -3,13 +3,18 @@ import { repliesTable, doubtsTable, classroomsTable } from "@/configs/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
+import { parseAndValidateRequest } from "@/lib/validations/validate";
+import { updateReplyActionSchema } from "@/lib/validations/reply";
+import { DOUBT_STATUS, DoubtStatus, isValidDoubtStatus } from "@/lib/doubtStatus";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const { errorResponse, data } = await parseAndValidateRequest(req, updateReplyActionSchema);
+        if (errorResponse) return errorResponse;
+        const { action, content, subject, imageUrl, userName, replyId, status, tags = [] } = data;
+        
         const user = await currentUser();
         const email = user?.primaryEmailAddress?.emailAddress;
-
-        const { content, imageUrl } = await req.json();
         const { id } = await params;
         const replyId = parseInt(id);
 
